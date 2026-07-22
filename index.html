@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hosting Guide</title>
+</head>
+<body>
+    <h2>Step-by-Step Guide: Hosting via GitHub Pages & Setting up `robot.local`</h2>
+    
+    <p>Since your dashboard code runs locally in the browser and connects via MQTT (WebSocket) and your ESP32's IP/mDNS stream, hosting it on GitHub Pages is super easy. However, remember that because GitHub Pages uses <strong>HTTPS</strong>, your browser might block an insecure `http://` video stream URL. The best workaround is either serving the HTML directly from the ESP32 (SPIFFS/LittleFS) or using a local browser workaround.</p>
+
+    <h3>Phase 1: Uploading to GitHub Pages</h3>
+    <ol>
+        <li>Go to <a href="https://github.com" target="_blank">GitHub</a> and create a new repository (e.g., named <code>robot-hud</code>). Make it <strong>Public</strong>.</li>
+        <li>Rename your final HTML file to exactly <code>index.html</code>.</li>
+        <li>Upload your <code>index.html</code> file (and any local images if you aren't using URLs) into the main branch of your repository.</li>
+        <li>Go to your repository's <strong>Settings</strong> tab at the top.</li>
+        <li>In the left sidebar, click on <strong>Pages</strong>.</li>
+        <li>Under <strong>Build and deployment</strong> -> <strong>Branch</strong>, select <code>main</code> (or <code>master</code>) and `/ (root)`, then click <strong>Save</strong>.</li>
+        <li>Within a minute, GitHub will give you a live URL like `https://yourusername.github.io/robot-hud/`.</li>
+    </ol>
+
+    <h3>Phase 2: Achieving the `robot.local` URL</h3>
+    <p>To use an easy-to-remember address like <code>http://robot.local</code> instead of a raw IP address, your ESP32 needs to broadcast its hostname on your local Wi-Fi network using mDNS.</p>
+    
+    <ol>
+        <li>Ensure your ESP32 code includes the mDNS library and initializes it right after connecting to Wi-Fi:
+            <pre><code>#include &lt;ESPmDNS.h&gt;
+
+// Inside setup():
+if (!MDNS.begin("robot")) {
+    Serial.println("Error setting up MDNS responder!");
+} else {
+    Serial.println("mDNS responder started: http://robot.local");
+}</code></pre>
+        </li>
+        <li>Once your ESP32 boots up and connects to your router, any device (phone, laptop, PC) connected to that <strong>same Wi-Fi network</strong> can simply type **`http://robot.local`** into the browser to access the ESP32's local server.</li>
+    </ol>
+
+    <h3>Pro-Tip for Mixed Content (HTTPS vs HTTP)</h3>
+    <p>If you host your HUD on GitHub Pages (which is HTTPS) but try to pull an unencrypted video stream (`http://192.168.1.100:81/stream`), modern browsers will block it for security ("Mixed Content Error"). To avoid this completely, you can save your <code>index.html</code> file directly onto the ESP32's flash memory (LittleFS) or use a local helper setup so everything runs natively under the exact same domain!</p>
+</body>
+</html>
